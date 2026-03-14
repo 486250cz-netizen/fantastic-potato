@@ -1,0 +1,159 @@
+// 简单种地游戏：0 空地，1 种子，2 成熟
+const ROWS = 4
+const COLS = 5
+
+const state = {
+  grid: [],
+  coins: 50,
+  day: 1,
+  seedCost: 5,
+  harvestReward: 12
+}
+
+function createEmptyGrid() {
+  const grid = []
+  for (let r = 0; r < ROWS; r++) {
+    const row = []
+    for (let c = 0; c < COLS; c++) {
+      row.push({ state: 0, days: 0 })
+    }
+    grid.push(row)
+  }
+  return grid
+}
+
+function $(id) {
+  return document.getElementById(id)
+}
+
+function renderFarm() {
+  const farm = $('farm')
+  farm.innerHTML = ''
+
+  state.grid.forEach((row, r) => {
+    const rowDiv = document.createElement('div')
+    rowDiv.className = 'row'
+
+    row.forEach((cell, c) => {
+      const cellDiv = document.createElement('div')
+      cellDiv.classList.add('cell')
+
+      if (cell.state === 1) cellDiv.classList.add('cell-seed')
+      else if (cell.state === 2) cellDiv.classList.add('cell-grown')
+      else cellDiv.classList.add('cell-empty')
+
+      if (cell.state === 1) cellDiv.textContent = '苗'
+      if (cell.state === 2) cellDiv.textContent = '熟'
+
+      cellDiv.addEventListener('click', () => tapCell(r, c))
+      rowDiv.appendChild(cellDiv)
+    })
+
+    farm.appendChild(rowDiv)
+  })
+}
+
+function updateInfo() {
+  $('coins').textContent = state.coins
+  $('day').textContent = state.day
+  $('seedCost').textContent = state.seedCost
+  $('harvestReward').textContent = state.harvestReward
+}
+
+function tapCell(r, c) {
+  const cell = state.grid[r][c]
+
+  if (cell.state === 0) {
+    // 空地：种植
+    if (state.coins < state.seedCost) {
+      alert('金币不足，不能种植')
+      return
+    }
+    cell.state = 1
+    cell.days = 0
+    state.coins -= state.seedCost
+  } else if (cell.state === 2) {
+    // 成熟：收获
+    cell.state = 0
+    cell.days = 0
+    state.coins += state.harvestReward
+    alert('收获成功！')
+  } else {
+    // 生长中
+    alert('还没长好，再等等')
+  }
+
+  updateInfo()
+  renderFarm()
+}
+
+function nextDay() {
+  state.grid.forEach(row => {
+    row.forEach(cell => {
+      if (cell.state === 1) {
+        cell.days += 1
+        if (cell.days >= 2) {
+          cell.state = 2
+        }
+      }
+    })
+  })
+  state.day += 1
+  updateInfo()
+  renderFarm()
+}
+
+function plantAll() {
+  let planted = 0
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = state.grid[r][c]
+      if (cell.state === 0 && state.coins >= state.seedCost) {
+        cell.state = 1
+        cell.days = 0
+        state.coins -= state.seedCost
+        planted++
+      }
+    }
+  }
+  if (planted === 0) {
+    alert('没有可以种的地，或者金币不足')
+  }
+  updateInfo()
+  renderFarm()
+}
+
+function harvestAll() {
+  let harvested = 0
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = state.grid[r][c]
+      if (cell.state === 2) {
+        cell.state = 0
+        cell.days = 0
+        state.coins += state.harvestReward
+        harvested++
+      }
+    }
+  }
+  if (harvested === 0) {
+    alert('没有成熟的作物可以收获')
+  } else {
+    alert(`收获了 ${harvested} 块地！`)
+  }
+  updateInfo()
+  renderFarm()
+}
+
+function init() {
+  state.grid = createEmptyGrid()
+  updateInfo()
+  renderFarm()
+
+
+  $('nextDayBtn').addEventListener('click', nextDay)
+  $('plantAllBtn').addEventListener('click', plantAll)
+  $('harvestAllBtn').addEventListener('click', harvestAll)
+}
+
+window.addEventListener('DOMContentLoaded', init)
